@@ -1,9 +1,6 @@
-import sys
 import numpy as np
 import imageio.v2 as imageio
-import math
 from pathlib import Path
-
 
 def read_pfm(path: str) -> np.ndarray:
     with open(path, 'rb') as f:
@@ -136,8 +133,9 @@ def run_evaluation(dataset_dir: Path, algo_name, bad_thre=2.0):
         print_row(scene_dir.name, algo_name, result)
 
 
-run_evaluation(
-    Path("/root/workspace/middlebury-stereo-dataset/"),
-    algo_name="ELAS",
-    bad_thre=2.0
-)
+if __name__ == "__main__":
+    run_evaluation(
+        Path("/root/workspace/middlebury-stereo-dataset/"),
+        algo_name="ELAS",
+        bad_thre=2.0
+    )
