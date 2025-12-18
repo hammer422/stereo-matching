@@ -107,13 +107,9 @@ def print_row(scene, algo, r):
     )
 
 def run_evaluation(dataset_dir: Path, algo_name, bad_thre=2.0):
-    dataset_dir = dataset_dir / "MiddEval3"
-    train_dataset_dir = dataset_dir / "trainingF"
-    test_dataset_dir = dataset_dir / "testF"
-
     print_header(bad_thre)
 
-    for scene_dir in train_dataset_dir.glob("*"):
+    for scene_dir in dataset_dir.glob("*"):
         print("=" * 80)
         calib_meta = read_calib(scene_dir / "calib.txt")
         gtdisp = read_pfm(str(scene_dir / "disp0GT.pfm"))
@@ -134,8 +130,12 @@ def run_evaluation(dataset_dir: Path, algo_name, bad_thre=2.0):
 
 
 if __name__ == "__main__":
+    dataset_dir = Path("/root/workspace/middlebury-stereo-dataset/")
+    train_dataset_dir = dataset_dir / "MiddEval3" / "trainingF"
+    test_dataset_dir = dataset_dir / "MiddEval3" / "testF"
+
     run_evaluation(
-        Path("/root/workspace/middlebury-stereo-dataset/"),
+        train_dataset_dir,
         algo_name="ELAS",
         bad_thre=2.0
     )
