@@ -7,15 +7,15 @@ class SGBMAlgo(BaseAlgo):
     def __init__(self, dataset_dir, algo_name, bad_thre=2):
         super().__init__(dataset_dir, algo_name, bad_thre)
         
-        self.num_disparities = 192
-        self.block_size = 5
+        self.num_disparities = 256
+        self.block_size = 7
 
         self.sgbm = cv2.StereoSGBM_create(
             minDisparity=0,
             numDisparities=self.num_disparities,
             blockSize=self.block_size,
-            P1=8 * self.block_size * self.block_size,
-            P2=32 * self.block_size * self.block_size,
+            P1=24 * self.block_size * self.block_size,
+            P2=96 * self.block_size * self.block_size,
             disp12MaxDiff=1,
             uniquenessRatio=10,
             speckleWindowSize=100,
@@ -45,4 +45,4 @@ if __name__ == "__main__":
         bad_thre=2.0,
     )
     algo_wrapper.run_train()
-    algo_wrapper.eval_train()
+    algo_wrapper.eval_train(extra_algo_names=["ELAS"])
