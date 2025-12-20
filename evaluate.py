@@ -1,6 +1,7 @@
 import numpy as np
 import imageio.v2 as imageio
 from pathlib import Path
+from collections import defaultdict
 
 def read_pfm(path: str) -> np.ndarray:
     with open(path, 'rb') as f:
@@ -106,28 +107,37 @@ def print_row(scene, algo, r):
         f"{r['avgErr']:9.3f}"
     )
 
-def run_evaluation(dataset_dir: Path, algo_name, bad_thre=2.0):
+def run_evaluation(dataset_dir: Path, algo_names, bad_thre=2.0):
+    total_avg_errs = defaultdict(list)
+
     print_header(bad_thre)
 
     for scene_dir in dataset_dir.glob("*"):
         print("=" * 80)
-        calib_meta = read_calib(scene_dir / "calib.txt")
-        gtdisp = read_pfm(str(scene_dir / "disp0GT.pfm"))
-        disp = read_pfm(str(scene_dir / f"disp0{algo_name}.pfm"))
-        mask = imageio.imread(str(scene_dir / "mask0nocc.png"))
-        assert np.array(mask).ndim == 2
-        assert np.array(gtdisp).ndim == 2
-        assert np.array(disp).ndim == 2
-        max_disp = int(calib_meta["ndisp"])
-        rounddisp = int(calib_meta["isint"]) == 1
+        for algo_name in algo_names:
+            calib_meta = read_calib(scene_dir / "calib.txt")
+            gtdisp = read_pfm(str(scene_dir / "disp0GT.pfm"))
+            disp = read_pfm(str(scene_dir / f"disp0{algo_name}.pfm"))
+            mask = imageio.imread(str(scene_dir / "mask0nocc.png"))
+            assert np.array(mask).ndim == 2
+            assert np.array(gtdisp).ndim == 2
+            assert np.array(disp).ndim == 2
+            max_disp = int(calib_meta["ndisp"])
+            rounddisp = int(calib_meta["isint"]) == 1
 
-        result = evaldisp(
-            disp=disp, gtdisp=gtdisp, mask=mask,
-            badthresh=bad_thre,
-            maxdisp=max_disp, rounddisp=rounddisp
-        )
-        print_row(scene_dir.name, algo_name, result)
+            result = evaldisp(
+                disp=disp, gtdisp=gtdisp, mask=mask,
+                badthresh=bad_thre,
+                maxdisp=max_disp, rounddisp=rounddisp
+            )
+            print_row(scene_dir.name, algo_name, result)
 
+            total_avg_errs[algo_name].append(result["avgErr"])
+
+    print("=" * 80)
+    print("total avg err: ")
+    for algo_name, errs in total_avg_errs.items():
+        print(f"algo_name: {algo_name},  total avg err: {np.mean(errs)}")
 
 if __name__ == "__main__":
     dataset_dir = Path("/root/workspace/middlebury-stereo-dataset/")
@@ -136,6 +146,6 @@ if __name__ == "__main__":
 
     run_evaluation(
         train_dataset_dir,
-        algo_name="ELAS",
+        algo_names=["ELAS", "ELAS"],
         bad_thre=2.0
     )

@@ -35,16 +35,16 @@ class BaseAlgo:
             assert right_image.shape[-1] == 3
 
             disp = self.compute_disparity(left=left_image, right=right_image)
-            write_pfm(self.train_dataset_dir / f"disp0{self.algo_name}.pfm", disp)
+            write_pfm(scene_dir / f"disp0{self.algo_name}.pfm", disp)
 
         print("[run_train]: finished")
         print()
 
-    def eval_train(self):
+    def eval_train(self, extra_algo_names=["ELAS"]):
         print("Start to run evaluation!!!!!!!")
         run_evaluation(
             self.train_dataset_dir,
-            algo_name=self.algo_name,
+            algo_names=[self.algo_name,] + extra_algo_names,
             bad_thre=self.bad_thre
         )
         print("[eval_train]: finished")
