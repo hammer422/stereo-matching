@@ -77,6 +77,28 @@ def compute_cost_volume_naive(
 
     return cost_volume
 
+def compute_cost_volume_optimize(
+    census_left: np.ndarray,
+    census_right: np.ndarray,
+    min_disp: int,
+    max_disp: int,
+):
+    assert census_left.shape == census_right.shape, "Census maps must have same shape"
+    assert census_left.dtype == census_right.dtype == np.uint64, "Census dtype must be uint64"
+    assert census_left.ndim == 2, "Census inputs must be 2D"
+    assert 0 <= min_disp < max_disp, "Must satisfy: 0 <= min_disp < max_disp"
+    assert max_disp > 0, "max_disp must be positive"
+
+    H, W = census_left.shape
+    D = max_disp - min_disp
+    
+    cost_volume = np.empty((D, H, W), dtype=np.uint8)
+    
+    for d_idx in range(D):
+        pass
+    
+    
+    
 
 def generate_test_image(shape: Tuple[int, int] = (100, 100), seed: int = 42) -> np.ndarray:
     np.random.seed(seed)
@@ -252,6 +274,30 @@ def benchmark_cost_volume_functions(
 
     
 if __name__ == "__main__":
+    
+    if 1:
+        a = np.uint64(7)
+        b = np.uint64(10)
+        print(bin(a ^ b).count('1'))
+        
+        
+        # seed = 42
+        # shape = (512, 512)
+        # window_size = 5
+        # min_disp = 0
+        # max_disp = 64
+        # np.random.seed(seed)
+        # left_img = np.random.randint(0, 256, size=shape, dtype=np.uint8)
+        # right_img = np.random.randint(0, 256, size=shape, dtype=np.uint8)
+        
+        # census_l = census_transform_optimized(left_img, window_size)
+        # census_r = census_transform_optimized(right_img, window_size)
+        
+        # cost_volume = compute_cost_volume_naive(census_l, census_r, min_disp, max_disp)
+        
+        exit(0)
+    
+    
     # census transform functions to test
     census_funcs = [
         census_transform_naive,
