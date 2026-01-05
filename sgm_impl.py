@@ -77,12 +77,29 @@ def compute_cost_volume_naive(
 
     return cost_volume
 
+
 def compute_cost_volume_optimize(
     census_left: np.ndarray,
     census_right: np.ndarray,
     min_disp: int,
     max_disp: int,
 ):
+    _POPCOUNT_LUT = np.array([bin(i).count('1') for i in range(256)], dtype=np.uint8)
+
+    def _hamming_distance_uint64(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+        """
+        Compute Hamming distance between two uint64 arrays using LUT.
+        Input: a, b of same shape, dtype=np.uint64
+        Output: uint8 array of Hamming distances (max 64, fits in uint8)
+        """
+        xor = np.bitwise_xor(a, b)  # shape (H, W), uint64
+        # Split into 8 bytes (little-endian or big-endian doesn't matter as long as consistent)
+        # Use view to reinterpret as uint8, then reshape
+        xor_bytes = xor.view(np.uint8).reshape(*xor.shape, 8)  # (H, W, 8)
+        # Sum popcount of each byte using LUT
+        return np.sum(_POPCOUNT_LUT[xor_bytes], axis=-1).astype(np.uint8)
+
+
     assert census_left.shape == census_right.shape, "Census maps must have same shape"
     assert census_left.dtype == census_right.dtype == np.uint64, "Census dtype must be uint64"
     assert census_left.ndim == 2, "Census inputs must be 2D"
@@ -93,11 +110,25 @@ def compute_cost_volume_optimize(
     D = max_disp - min_disp
     
     cost_volume = np.empty((D, H, W), dtype=np.uint8)
-    
+
+    # Pre-slice right image for all disparities
     for d_idx in range(D):
-        pass
-    
-    
+        d = min_disp + d_idx
+        # 只对满足 j >= d 的列计算（即左图的 j 对应右图的 j - d）
+        if d == 0:
+            # No shift
+            hamming = _hamming_distance_uint64(census_left, census_right)
+            cost_volume[d_idx] = hamming
+        else:
+            # Left image: columns [d, W)
+            # Right image: columns [0, W - d)
+            left_patch = census_left[:, d:]
+            right_patch = census_right[:, :-d] if d < W else np.zeros_like(left_patch)
+            hamming = _hamming_distance_uint64(left_patch, right_patch)
+            cost_volume[d_idx, :, d:] = hamming
+            # Columns [0, d) remain as 255 (invalid disparity)
+
+    return cost_volume
     
 
 def generate_test_image(shape: Tuple[int, int] = (100, 100), seed: int = 42) -> np.ndarray:
@@ -194,10 +225,6 @@ def verify_cost_volume_consistency(
     window_size: int = 5,
     seed: int = 42
 ) -> bool:
-    """
-    Verify cost volume functions produce identical outputs.
-    Uses same left/right image pair, and naive census for fair comparison.
-    """
     print(f"\n[Cost Volume Correctness] disp=[{min_disp}, {max_disp}), win={window_size}")
     for shape in test_shapes:
         # Generate stereo pair (for simplicity, use same image shifted)
